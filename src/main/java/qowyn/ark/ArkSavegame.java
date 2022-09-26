@@ -382,10 +382,10 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
 
     int hibernatedIndicesCount = archive.getInt();
 
-    if (hibernatedIndicesCount != hibernatedClassesCount) {
-      archive.debugMessage("hibernatedClassesCount does not match hibernatedIndicesCount");
-      throw new UnsupportedOperationException();
-    }
+//    if (hibernatedIndicesCount != hibernatedClassesCount) {
+//      archive.debugMessage("hibernatedClassesCount does not match hibernatedIndicesCount");
+//      throw new UnsupportedOperationException();
+//    }
 
     hibernationIndices.clear();
     hibernationIndices.ensureCapacity(hibernatedIndicesCount);
