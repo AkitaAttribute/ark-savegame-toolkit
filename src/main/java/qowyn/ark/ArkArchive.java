@@ -1,6 +1,7 @@
 package qowyn.ark;
 
 import java.io.PrintStream;
+import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -257,7 +258,7 @@ public class ArkArchive {
   }
 
   public void position(int position) {
-    mbb.position(position);
+    ((Buffer) mbb).position(position);
   }
 
   public int limit() {
@@ -306,11 +307,11 @@ public class ArkArchive {
 
   /**
    * Writes the index of name in nameTable into the ArkArchive.
-   * 
+   *
    * Writes the nameIndex of name into the ArkArchive.
-   * 
+   *
    * Ensures name is in the current nameTable.
-   * 
+   *
    * @param name
    */
   protected void putNameIntoTable(ArkName name) {
@@ -337,7 +338,7 @@ public class ArkArchive {
   /**
    * Writes string to the archive If string contains non-ascii chars a multibyte string will be
    * written
-   * 
+   *
    * @param string
    */
   public void putString(String string) {
@@ -369,7 +370,7 @@ public class ArkArchive {
 
   /**
    * Writes name to the archive.
-   * 
+   *
    * @param name
    */
   public void putName(ArkName name) {
@@ -406,7 +407,7 @@ public class ArkArchive {
 
   /**
    * Writes a boolean as an int
-   * 
+   *
    * @param value
    */
   public void putBoolean(boolean value) {
@@ -415,7 +416,7 @@ public class ArkArchive {
 
   /**
    * Writes {@code value} directly to the archive.
-   * 
+   *
    * @param value The data to write
    */
   public void putBytes(byte[] value) {
@@ -424,7 +425,7 @@ public class ArkArchive {
 
   /**
    * Writes {@code value} directly to the archive.
-   * 
+   *
    * @param value The data to write
    */
   public void putBytes(byte[] value, int offset, int length) {
@@ -433,7 +434,7 @@ public class ArkArchive {
 
   /**
    * Indicates that some data couldn't be read.
-   * 
+   *
    * @return true if some data has been lost
    */
   public boolean hasUnknownData() {
@@ -451,7 +452,7 @@ public class ArkArchive {
    * Indicates that there might be unknown references to some names. If the current file has to be
    * written back to disk this should be considered by keeping all old names and adding new names to
    * the end of the list.
-   * 
+   *
    * @return true if there are unknown names
    */
   public boolean hasUnknownNames() {

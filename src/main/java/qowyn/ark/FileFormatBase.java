@@ -1,6 +1,7 @@
 package qowyn.ark;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
@@ -24,7 +25,7 @@ public abstract class FileFormatBase implements ConversionSupport {
           bytesRead = fc.read(buffer);
           totalRead += bytesRead;
         }
-        buffer.clear();
+        clear(buffer);
       }
       ArkArchive archive = new ArkArchive(buffer, filePath);
       readBinary(archive, options);
@@ -32,5 +33,10 @@ public abstract class FileFormatBase implements ConversionSupport {
   }
 
   public abstract void readBinary(ArkArchive archive, ReadingOptions options);
+
+  private static void clear(Buffer buffer)
+  {
+    buffer.clear();
+  }
 
 }
