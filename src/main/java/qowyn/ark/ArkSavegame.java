@@ -1,6 +1,7 @@
 package qowyn.ark;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
@@ -473,7 +474,7 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
       writeBinaryProperties(archive, options);
 
       if (!options.usesMemoryMapping()) {
-        buffer.clear();
+        ((Buffer) buffer).clear();
         int bytesWritten = fc.write(buffer);
         int totalBytes = bytesWritten;
         while (totalBytes < buffer.capacity()) {
