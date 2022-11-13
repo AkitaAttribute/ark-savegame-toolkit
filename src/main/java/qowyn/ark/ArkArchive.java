@@ -166,12 +166,12 @@ public class ArkArchive {
     }
 
     if (size == 1) {
-      mbb.position(mbb.position() + 1);
+      ((Buffer) mbb).position(mbb.position() + 1);
       return "";
     }
 
     if (size == -1) {
-      mbb.position(mbb.position() + 2);
+      ((Buffer) mbb).position(mbb.position() + 2);
       return "";
     }
 
@@ -195,7 +195,7 @@ public class ArkArchive {
       mbb.asCharBuffer().get(buffer, 0, absSize);
       String result = new String(buffer, 0, absSize - 1);
 
-      mbb.position(mbb.position() + absSize * 2);
+      ((Buffer) mbb).position(mbb.position() + absSize * 2);
 
       return result;
     } else {
@@ -230,7 +230,7 @@ public class ArkArchive {
       debugMessage(LoggerHelper.format("String (%d) larger than internal Buffer (%d)", absSize, BUFFER_LENGTH));
     }
 
-    mbb.position(mbb.position() + readSize);
+    ((Buffer) mbb).position(mbb.position() + readSize);
   }
 
   public void skipBytes(int count) {
@@ -242,7 +242,7 @@ public class ArkArchive {
       throw new BufferUnderflowException();
     }
 
-    mbb.position(mbb.position() + count);
+    ((Buffer) mbb).position(mbb.position() + count);
   }
 
   public int getInt() {
@@ -363,7 +363,7 @@ public class ArkArchive {
     } else {
       mbb.putInt(-length);
       mbb.asCharBuffer().put(string);
-      mbb.position(mbb.position() + length * 2 - 2);
+      ((Buffer) mbb).position(mbb.position() + length * 2 - 2);
       mbb.putShort((short) 0);
     }
   }
