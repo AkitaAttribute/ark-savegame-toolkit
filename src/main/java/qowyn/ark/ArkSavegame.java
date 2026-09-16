@@ -64,6 +64,15 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
 
   protected int hibernationV8Unknown4;
 
+  /**
+   * ARK 349.10 extended the version-9 hibernation header without changing saveVersion.
+   */
+  protected boolean hibernationV9_34910;
+
+  protected int hibernationV9_34910Unknown1;
+
+  protected int hibernationV9_34910Unknown2;
+
   protected int hibernationUnknown1;
 
   protected int hibernationUnknown2;
@@ -347,6 +356,9 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
       hibernationV8Unknown2 = 0;
       hibernationV8Unknown3 = 0;
       hibernationV8Unknown4 = 0;
+      hibernationV9_34910 = false;
+      hibernationV9_34910Unknown1 = 0;
+      hibernationV9_34910Unknown2 = 0;
       hibernationUnknown1 = 0;
       hibernationUnknown2 = 0;
       hibernationClasses.clear();
@@ -358,11 +370,43 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
 
     archive.position(hibernationOffset);
 
+    hibernationV9_34910 = false;
+    hibernationV9_34910Unknown1 = 0;
+    hibernationV9_34910Unknown2 = 0;
+
     if (saveVersion > 7) {
       hibernationV8Unknown1 = archive.getInt();
       hibernationV8Unknown2 = archive.getInt();
       hibernationV8Unknown3 = archive.getInt();
       hibernationV8Unknown4 = archive.getInt();
+    }
+
+    // ARK 349.10 extended the version-9 hibernation header without incrementing saveVersion.
+    // The format is six int32 values followed by an identical copy of those six values.
+    // Four values have already been consumed above, so eight more remain when this header is present.
+    if (saveVersion > 8
+        && hibernationV8Unknown1 == -1
+        && hibernationV8Unknown2 == 2
+        && archive.position() + Integer.BYTES * 8 <= nameTableOffset) {
+      int extendedHeaderPosition = archive.position();
+      int unknown1 = archive.getInt();
+      int unknown2 = archive.getInt();
+
+      boolean duplicatedHeaderMatches = hibernationV8Unknown1 == archive.getInt()
+          && hibernationV8Unknown2 == archive.getInt()
+          && hibernationV8Unknown3 == archive.getInt()
+          && hibernationV8Unknown4 == archive.getInt()
+          && unknown1 == archive.getInt()
+          && unknown2 == archive.getInt();
+
+      if (duplicatedHeaderMatches) {
+        hibernationV9_34910 = true;
+        hibernationV9_34910Unknown1 = unknown1;
+        hibernationV9_34910Unknown2 = unknown2;
+      } else {
+        // Avoid treating an old version-9 save that happens to start with -1,2 as the new layout.
+        archive.position(extendedHeaderPosition);
+      }
     }
 
     // No hibernate section if we reached the nameTable
@@ -383,10 +427,10 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
 
     int hibernatedIndicesCount = archive.getInt();
 
-//    if (hibernatedIndicesCount != hibernatedClassesCount) {
-//      archive.debugMessage("hibernatedClassesCount does not match hibernatedIndicesCount");
-//      throw new UnsupportedOperationException();
-//    }
+    if (hibernatedIndicesCount != hibernatedClassesCount) {
+      archive.debugMessage("hibernatedClassesCount does not match hibernatedIndicesCount");
+      throw new UnsupportedOperationException();
+    }
 
     hibernationIndices.clear();
     hibernationIndices.ensureCapacity(hibernatedIndicesCount);
@@ -556,6 +600,17 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
       archive.putInt(hibernationV8Unknown4);
     }
 
+    if (saveVersion > 8 && hibernationV9_34910) {
+      archive.putInt(hibernationV9_34910Unknown1);
+      archive.putInt(hibernationV9_34910Unknown2);
+      archive.putInt(hibernationV8Unknown1);
+      archive.putInt(hibernationV8Unknown2);
+      archive.putInt(hibernationV8Unknown3);
+      archive.putInt(hibernationV8Unknown4);
+      archive.putInt(hibernationV9_34910Unknown1);
+      archive.putInt(hibernationV9_34910Unknown2);
+    }
+
     if (hibernationEntries.isEmpty()) {
       return;
     }
@@ -662,6 +717,10 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
   protected int calculateHibernationSize(NameSizeCalculator nameSizer) {
     int size = saveVersion > 7 ? Integer.BYTES * 4 : 0;
 
+    if (saveVersion > 8 && hibernationV9_34910) {
+      size += Integer.BYTES * 8;
+    }
+
     if (hibernationEntries.size() > 0) {
       size += Integer.BYTES * (5 + hibernationIndices.size());
       size += hibernationClasses.stream().mapToInt(ArkArchive::getStringLength).sum();
@@ -762,6 +821,9 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
       hibernationV8Unknown2 = hibernation.path("v8Unknown2").asInt();
       hibernationV8Unknown3 = hibernation.path("v8Unknown3").asInt();
       hibernationV8Unknown4 = hibernation.path("v8Unknown4").asInt();
+      hibernationV9_34910 = hibernation.has("v9_34910Unknown1") && hibernation.has("v9_34910Unknown2");
+      hibernationV9_34910Unknown1 = hibernation.path("v9_34910Unknown1").asInt();
+      hibernationV9_34910Unknown2 = hibernation.path("v9_34910Unknown2").asInt();
       hibernationUnknown1 = hibernation.path("unknown1").asInt();
       hibernationUnknown2 = hibernation.path("unknown2").asInt();
 
@@ -790,6 +852,9 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
       hibernationV8Unknown2 = 0;
       hibernationV8Unknown3 = 0;
       hibernationV8Unknown4 = 0;
+      hibernationV9_34910 = false;
+      hibernationV9_34910Unknown1 = 0;
+      hibernationV9_34910Unknown2 = 0;
       hibernationUnknown1 = 0;
       hibernationUnknown2 = 0;
     }
@@ -876,6 +941,11 @@ public class ArkSavegame extends FileFormatBase implements GameObjectContainerMi
     generator.writeNumberField("v8Unknown2", hibernationV8Unknown2);
     generator.writeNumberField("v8Unknown3", hibernationV8Unknown3);
     generator.writeNumberField("v8Unknown4", hibernationV8Unknown4);
+
+    if (hibernationV9_34910) {
+      generator.writeNumberField("v9_34910Unknown1", hibernationV9_34910Unknown1);
+      generator.writeNumberField("v9_34910Unknown2", hibernationV9_34910Unknown2);
+    }
 
     generator.writeNumberField("unknown1", hibernationUnknown1);
     generator.writeNumberField("unknown2", hibernationUnknown2);
